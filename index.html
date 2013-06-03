@@ -176,30 +176,40 @@
 	/* window.onload = function() {
 		initialize();
 	}; */
+	connect('ws://localhost:8887/player');
 	var ws;
-	if ('MozWebSocket' in window) {
-		ws = new MozWebSocket('ws://localhost:8887/player');
-	} else if ('WebSocket' in window) {
-		ws = new WebSocket('ws://localhost:8887/player');
-	} else {
-		alert('Your browser does not support WebSockets');
-	}
-	ws.onopen = function() {
-		console.log('Connection opened');
-	};
-	ws.onmessage = function(event) {
-		var players = JSON.parse(event.data);
-		clear();
-		for ( var index in players) {
-			drawRotatedImage(ship, players[index]);
+	function connect(host) {
+		if ('MozWebSocket' in window) {
+			ws = new MozWebSocket(host);
+		} else if ('WebSocket' in window) {
+			ws = new WebSocket(host);
+		} else {
+			alert('Your browser does not support WebSockets');
 		}
-	};
-	ws.onclose = function() {
-		console.log('Connection closed');
-	};
-	ws.onerror = function(event) {
-		console.log('Connection error');
-	};
+		ws.onopen = function() {
+			console.log('Connection opened');
+		};
+		ws.onmessage = function(event) {
+			var players = JSON.parse(event.data);
+			console.log("Data from server" + event.data);
+			clear();
+			for ( var index in players) {
+				var player = players[index];
+				if (player.type == 'UPDATE') {
+					drawRotatedImage(ship, player);
+				} else {
+					ws.close();
+				}
+			}
+		};
+		ws.onclose = function() {
+			console.log('Connection closed');
+			connect('ws://localhost:8888/player');
+		};
+		ws.onerror = function(event) {
+			console.log('Connection error');
+		};
+	}
 	function updateServer() {
 		ws.send(JSON.stringify(player));
 	}
