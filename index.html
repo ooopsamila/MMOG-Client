@@ -36,6 +36,8 @@
 	var TO_RADIANS = Math.PI / 180;
 	var FROM_RADIANS = 180 / Math.PI;
 	var player = {
+		type : 1,
+		id : 0,
 		v_x : 0,
 		v_y : 0
 	};
@@ -54,10 +56,9 @@
 
 	window.onload = function() {
 		ship.src = 'img/arrow.jpg';
-		//bullet.src = 'images/coin.png';
 		canvas = document.getElementById("canvas");
 		ctx = canvas.getContext("2d");
-		// return setInterval(drawRotatedImage(ship, playerObject), 10);
+		player.id = Math.floor(Math.random() * 101)
 		drawRotatedImage(ship, 50, 50);
 	};
 
@@ -173,9 +174,6 @@
 		}
 	}
 
-	/* window.onload = function() {
-		initialize();
-	}; */
 	connect('ws://localhost:8887/player');
 	var ws;
 	function connect(host) {
@@ -191,20 +189,20 @@
 		};
 		ws.onmessage = function(event) {
 			var players = JSON.parse(event.data);
-			console.log("Data from server" + event.data);
+			console.log(event.data);
 			clear();
 			for ( var index in players) {
-				var player = players[index];
-				if (player.type == 'UPDATE') {
-					drawRotatedImage(ship, player);
-				} else {
+				var inPlayer = players[index];
+				if (inPlayer.type == 1) {
+					drawRotatedImage(ship, inPlayer);
+				} else if (player.id == inPlayer.id) {
 					ws.close();
+					connect(inPlayer.url);
 				}
 			}
 		};
 		ws.onclose = function() {
 			console.log('Connection closed');
-			connect('ws://localhost:8888/player');
 		};
 		ws.onerror = function(event) {
 			console.log('Connection error');
